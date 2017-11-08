@@ -1,0 +1,15 @@
+{
+    "name": "root/dballearn",
+    "description": "This is all about dbal",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrya",
+            "email": "andri@jogjacamp.com"
+        }
+    ],
+    "require": {
+        "doctrine/dbal": "^2.3",
+        "slim/slim": "^2.6.3"
+    }
+}
