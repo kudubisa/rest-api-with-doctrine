@@ -1,141 +1,160 @@
 <?php
 require_once("vendor/autoload.php");
-require_once("dbal.php");
+require_once("Dbal.php");
+
+use Pagerfanta\Adapter\ArrayAdapter;
+use Pagerfanta\Pagerfanta;
 
 //This is Slim Section
 $app = new \Slim\Slim(
-	array(
-		"debug" => true,
-		"mode" => "development"
-	)
+    array(
+        "debug" => true,
+        "mode" => "development"
+    )
 );
+
+$dbal = new \MyDoctrine\Dbal;
+$conn = $dbal->getConnection();
+
+
+$client = new Raven_Client('https://8b4c52975e52402ca5e9e811c2e62c20:99e25f6920f24704949c974f473eea1a@sentry.io/244051');
+$error_handler = new Raven_ErrorHandler($client);
+$error_handler->registerExceptionHandler();
+$error_handler->registerErrorHandler();
+$error_handler->registerShutdownFunction();
+$client->install();
+
+
+//SWAGGER SECTION
+
+
+// $swagger = \Swagger\scan('/');
+// header('Content-Type: application/json');
+// echo $swagger;
 
 
 $app->get("/", function () use ($conn){
-	// $app->render('add_news_cat.php');
-	//echo "Welcome folks, this is great isn't it?";
-	$out = "";
-	$sql = "SELECT * FROM news_cat";
-	$stmt = $conn->query($sql);
 
-	while($row = $stmt->fetch()){
-		$out .= $row['name_cat']."<br>";
-	}
+    $category = new \Jogjacamp\Belajar\Category;
+    $adapter = $category->retrieve_all();
 
-	echo $out;
+    //common thing
+    $pagerfanta = new Pagerfanta($adapter);
+
+    //arguments
+    $maxPerPage = 5;
+    $currentPage = 1;
+
+    $pagerfanta->setMaxPerPage($maxPerPage); // 10 by default
+    $maxPerPage = $pagerfanta->getMaxPerPage();
+
+    $pagerfanta->setCurrentPage($currentPage); // 1 by default
+    $currentPage = $pagerfanta->getCurrentPage();
+
+    $nbResults = $pagerfanta->getNbResults();
+    $currentPageResults = $pagerfanta->getCurrentPageResults();
+
+    $num_page = $pagerfanta->getNbPages();
+
+    // $pagerfanta->haveToPaginate(); // whether the number of results is higher than the max per page
+
+    // $pagerfanta->hasPreviousPage();
+    // $pagerfanta->getPreviousPage();
+    // $pagerfanta->hasNextPage();
+    // $pagerfanta->getNextPage();
+
+    // $pagerfanta->getCurrentPageOffsetStart();
+    // $pagerfanta->getCurrentPageOffsetEnd();
+
+    echo json_encode(array(
+        'name'              => 'Park Han Byul',
+        'num_page'          => $num_page,
+        'current_page'      => $currentPageResults,
+        'has_next_page'     => $pagerfanta->hasNextPage(),
+        'next_page'         => $pagerfanta->getCurrentPageResults($pagerfanta->setCurrentPage(2)),
+        'previous_page'     => $pagerfanta->getPreviousPage(),
+        'page_offset_start' => $pagerfanta->getCurrentPageOffsetStart(),
+        'page_offset_end'   => $pagerfanta->getCurrentPageOffsetEnd()
+    ));
+
+
+    // $koneksi = $category->getConnection();
+
+    // $sm = $koneksi->getSchemaManager();
+
+    // $dbList = $sm->listDatabases();
+    // // $table = $sm->listTableDetails('');
+    // //$sequences = $sm->listSequences('rest_api');
+
+    // // for($sequences as $sequence){
+    // //  echo $sequence->getName()."\n";
+    // // }
+
+    // echo json_encode($dbList);
 
 
 });
 
-$app->get("/news_cat", function() use($conn){
-	$q = "SELECT * FROM news_cat order By id_cat asc";
-	$r = $conn->query($q);
-
-	while($row = $r->fetch()){
-		$data[] = $row;
-	}
-
-	echo json_encode($data);
-	$conn->close();
-	//echo "This should show  all news category";
-});
-
-$app->get("/news_cat/:id", function($id) use($conn){
-	$q = "SELECT * FROM news_cat WHERE id_cat = ?";
-	
-	$stmt = $conn->prepare($q);
-	$stmt->bindValue(1,$id);
-	$stmt->execute();
-	$r = $stmt->fetchAll();
-
-	echo json_encode($r); 
-	$conn->close();
-});
-
-$app->post("/news_cat", function() use($app,$conn){
-	$request = $app->request;
 
 
-	$q = "INSERT INTO news_cat (name_cat) values(?)";
-	$stmt = $conn->prepare($q);
 
-	$name_cat = $request->post('name_cat');
+$app->get('/swagger.json', function () use ($app) {
+    $swagger = \Swagger\scan('./routes/');
+    // header('Content-Type: application/json');
 
-	$stmt->bindValue(1, $name_cat);
-
-	$stmt->execute();
-
-	if($stmt){
-		$data = array(
-			"success" => 1
-		);
-	}else{
-		$data = array(
-			"success" => 0
-		);
-	}
-
-	echo json_encode($data);
-
-});
-
-$app->put("/news_cat/:id", function($id) use($app,$conn){
-	$request = $app->request;
-	
-	$q = "UPDATE news_cat set name_cat = ? WHERE id_cat = ?";
-	$stmt = $conn->prepare($q);
-
-	$name_cat = $request->params('name_cat');
-
-	$stmt->bindValue(1, $name_cat);
-	$stmt->bindValue(2, $id);
-
-	
-
-	$stmt->execute();
-
-	if($stmt){
-		$data = array(
-			"success" => 1,
-			"name_cat" => $name_cat
-		);
-	}else{
-		$data = array(
-			"success" => 0,
-			"name_cat" => $name_cat
-		);
-	}
-
-	echo json_encode($data);
-
+    $response = $app->response;
+    $response->setStatus("200");
+    $response->headers->set("Content-Type","application/json");
+    $response->write(json_encode($swagger));
+    // echo $swagger;
 });
 
 
-$app->delete("/news_cat/:id", function($id) use($app,$conn){
-	$request = $app->request;
+require(__DIR__."/routes/category.php");
+require(__DIR__."/routes/app.php");
 
-	$q = "DELETE from news_cat WHERE id_cat = ?";
-	$stmt = $conn->prepare($q);
 
-	$stmt->bindValue(1,$id);
 
-	$r = $stmt->execute();
 
-	if($r){
-		$data = array(
-			"success" => 1
-		);
-	}else{
-		$data = array(
-			"success" => 0
-		);
-	}
 
-	echo json_encode($data);
 
-});
 
 $app->run();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

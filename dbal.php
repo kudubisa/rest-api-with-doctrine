@@ -25,4 +25,4 @@ $conn = \Doctrine\DBAL\DriverManager::getConnection($connParams, $config);
 
 // use Doctirne\DBAL\DriverManager;
 // $conn = DriverManager::getConnection($connParams,$config);
-?>
+

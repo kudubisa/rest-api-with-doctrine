@@ -1,0 +1,13 @@
+Update Progress Training 9 November 2017
+1. Mempelajari Doctrin DBAL
+2. Mempelajari PSR
+
+Update Progress Training 10 November 2017
+1. Mempelajari PSR
+2. Mempelajari PHPUnit
+
+Update Progress Training 13 November 2017
+1. Mempelajari alur liquid
+2. Mempelajari Raven Sentry
+3. Mempelajari Pagerfanta
+4. Mempelajari Swagger

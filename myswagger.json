@@ -1,0 +1,20 @@
+swagger: '2.0'
+info:
+  version: 0.0.1
+  title: Simple API
+paths:
+  /:
+    get:
+      responses:
+        200:
+          description: OK
+          schema:
+            $ref: "#/definitions/SimpleObject"
+definitions:
+  SimpleObject:
+    type: object
+    properties:
+      foo:
+        type: string
+      bar:
+        type: number
